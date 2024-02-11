@@ -3,51 +3,70 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 use App\Models\Post;
 
 class PostController extends Controller
 {
-    public function index(): void
+    public function index(): View
     {
         $posts = Post::all();
-        dump($posts);
+
+        return view('post.index', compact('posts'));
     }
 
-    public function create(): void
+    public function create(): View
     {
-        $postsArray = [
-            [
-                'title' => 'Some title',
-                'content' => 'Another content',
-                'image' => 'Best image',
-                'likes' => 20,
-                'is_published' => 20,
-            ],
-            [
-                'title' => 'Some title 2',
-                'content' => 'Another content 2',
-                'image' => 'Best image 2',
-                'likes' => 22,
-                'is_published' => 22,
-            ],
-        ];
-
-        foreach ($postsArray as $post) {
-            Post::create($post);
-        }
-
-        dd('done');
+        return view('post.create');
     }
 
-    public function update(): void
+    public function store(Request $request): RedirectResponse
     {
-        $post = Post::find(1);
-
-        $post->update([
-            'title' => 'Updated title',
-            'content' => 'Updated content',
+        $data = $request->validate([
+            'title' => 'string',
+            'content' => 'string',
+            'image' => 'string',
         ]);
 
-        dd('done');
+        Post::create($data);
+
+        return redirect()->route('post.index');
+    }
+
+    public function show(Post $post): View
+    {
+        return view('post.show', compact('post'));
+    }
+
+    public function edit(Post $post): View
+    {
+        return view('post.edit', compact('post'));
+    }
+
+    public function update(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'title' => 'string',
+            'content' => 'string',
+            'image' => 'string',
+        ]);
+
+        $request->update($data);
+
+        return redirect()->route('post.show', $request->id);
+    }
+
+    public function destroy(Post $post): RedirectResponse
+    {
+        $post->delete();
+
+        return redirect()->route('post.index');
+    }
+
+    public function delete(): void
+    {   //Recovery
+        $post = Post::withTrashed()->find(2);
+        $post->restore();
     }
 }
